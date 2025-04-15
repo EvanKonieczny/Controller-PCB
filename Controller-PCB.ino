@@ -41,6 +41,10 @@ const int yAxis = A1;       // joystick Y axis
 const int xAxis_2 = A2;       // joystick X axis
 const int yAxis_2 = A3;       // joystick Y axis
 const int ledPin = 5;       // Mouse control LED
+
+const byte ENCODER_A = 0;
+const byte ENCODER_B = 1;
+
 // declare variables
 int trigger_pin_1 = A6;
 int trigger_pin_2 = A7;  // sensor pin
@@ -56,9 +60,17 @@ int responseDelay = 5;      // response delay of the mouse, in ms
 //bool mouseIsActive = false;  // whether or not to control the mouse
 int lastSwitchState = LOW;   // previous switch state
 
+volatile int16_t encoderPos = 0;
+
 void setup() {
   pinMode(switchPin, INPUT);  // the switch pin
   pinMode(ledPin, OUTPUT);    // the LED pin
+
+  pinMode(ENCODER_A, INPUT_PULLUP);
+  pinMode(ENCODER_B, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A), encoderISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_B), encoderISR, CHANGE);
+
   // take control of the mouse:
   //Mouse.begin();
   Serial.begin(9600);
@@ -94,7 +106,8 @@ void loop() {
   Serial.print(trigger_1_level);
   Serial.print(" ");
   Serial.print(trigger_2_level);
-  Serial.println();
+  Serial.print(" ");
+  Serial.println(encoderPos);
   // if the mouse control state is active, move the mouse:
   // if (mouseIsActive) {
   //   Mouse.move(xReading, yReading, 0);
@@ -142,4 +155,17 @@ int readAxis(int thisAxis) {
   Serial.print(reading);
   Serial.print(" ");
   return reading;
+}
+
+void encoderISR() {
+  static byte lastState = 0;
+  byte newState = (digitalRead(ENCODER_A) ? 2 : 0) + (digitalRead(ENCODER_B) ? 1 : 0);
+
+  if ((lastState ^ newState) == 2) {
+    encoderPos += (encoderPos & 1) ? -1 : 1;
+  }
+  else if ((lastState ^ newState) == 1) {
+    encoderPos += (encoderPos & 1) ? 1 : -1;
+  }
+  lastState = newState;
 }
