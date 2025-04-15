@@ -14,5 +14,4 @@
       // // Turn the relay OFF (high voltage circuit off)
       // digitalWrite(relayPin, LOW);
       // delay(2000); // Wait 2 seconds
-      // Edit test
     }
